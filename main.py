@@ -16,25 +16,28 @@ import string
 def search_Station(dbConn, searchStation):
     dbCursor = dbConn.cursor()
 
-    print("\nSearching for " + searchStation + " in database...\n")
+    # print("\nSearching for " + searchStation + " in database...\n")
     
-    dbCursor.execute("SELECT Station_Name FROM Stations WHERE Stations.Station_Name = ?;", (searchStation,))
-    
+    # Search for the stations and order them alphabetically
+    dbCursor.execute("SELECT Station_Name, Station_ID FROM Stations WHERE Stations.Station_Name LIKE ? ORDER BY Stations.Station_Name ASC;", (searchStation,))
+
     # Get the result
-    row = dbCursor.fetchone()
+    rows = dbCursor.fetchall()
 
-    # Check if a result is returned
-    if row:
-        # If there is a match
-        found_station = row[0]
-        print("Found station: " + found_station)
+    # Check if any results are returned
+    if rows:
+        # If there are matches
+        for row in rows:
+            found_station = row[0]
+            station_ID = row[1]
+            print(station_ID, ": " + found_station)
 
-        print("\nLength: ", len(row), ".")
-        # You can save the result to a variable or return it as needed
-        return found_station
+        # print("\nNumber of matching stations: ", len(rows))
+        # You can save the results to a variable or return them as needed
+        return [row[0] for row in rows]
     else:
         # If no match is found, handle it
-        print("Station not found in the database.")
+        # print("Station not found in the database.")
         return None
 
 
@@ -48,16 +51,18 @@ def search_Station(dbConn, searchStation):
 # 
 def partial_Name_Search(dbConn):
 
+    # Get input from user
     query = input("Enter partial station name (wildcards _ and %): ")
 
     # Call search_Station() function
     result = search_Station(dbConn, query)
 
-    if result:
-        # If stations are found
-        print("Additional processing for found station:", result)
-    else:
-        print("No stations found for the partial name:", query)
+    if result == None:
+        print("**No stations found...")
+
+    print() # Formatting
+
+    # End partial_Name_Search()
 
 
 ##################################################################  
@@ -124,29 +129,37 @@ def commandDriver(userChoice, dbConn):
     if userChoice == '1':
         partial_Name_Search(dbConn)
 
-    elif userChoice == 2:
-        print("Chose 2")
+    elif userChoice == '2':
+        print("Chose command 2 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 3:
-        print("Chose 3")
+    elif userChoice == '3':
+        print("Chose command 3 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 4:
-        print("Chose 4")
+    elif userChoice == '4':
+        print("Chose command 4 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 5:
-        print("Chose 5")
+    elif userChoice == '5':
+        print("Chose command 5 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 6:
-        print("Chose 6")
+    elif userChoice == '6':
+        print("Chose command 6 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 7:
-        print("Chose 7")
+    elif userChoice == '7':
+        print("Chose command 7 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 8:
-        print("Chose 8")
+    elif userChoice == '8':
+        print("Chose command 8 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
 
-    elif userChoice == 9:
-        print("Chose 9")
+    elif userChoice == '9':
+        print("Chose command 9 - Not Yet Implemented.\nExiting...\n")
+        exit(0)
     
     # If the user wants to exit
     elif userChoice == 'x':
