@@ -7,7 +7,7 @@ import string
 import matplotlib.pyplot as plt
 
 
-################################################################## 
+''' ################################################################## 
 #
 # search_Station
 #
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 # If mode == 0 , enables exact general search term only
 # If mode == 1 , enables partial general search
 # If mode == 2 , returns the station_ID
-#
+# '''
 def search_Station(dbConn, searchStation, mode):
     dbCursor = dbConn.cursor()
 
@@ -68,16 +68,19 @@ def search_Station(dbConn, searchStation, mode):
         # If no match is found, handle it
         # print("Station not found in the database.")
         return None
+    
+    # End search_Station()
 
 
-################################################################## 
+
+''' ################################################################## 
 #
 # partial_Name_Search
 #
 # Search for the given partial station name in the database
 # Output station names in ascending order. If no stations are 
 # found, print a message indicating that no stations were found.
-# 
+# '''
 def partial_Name_Search(dbConn):
 
     # Get input from user
@@ -94,7 +97,7 @@ def partial_Name_Search(dbConn):
     # End partial_Name_Search()
 
 
-################################################################## 
+''' ################################################################## 
 #
 # station_Search_Percentages
 #
@@ -105,7 +108,7 @@ def partial_Name_Search(dbConn):
 # Sundays/holidays for that station. Percentage calculated out of 
 # the total number of riders for that station. Displays both the 
 # totals and the percentages.
-# 
+# '''
 def station_Search_Percentages(dbConn):
     
     # Get input from user
@@ -161,29 +164,13 @@ def station_Search_Percentages(dbConn):
 
     # Get the result
     rows = dbCursor.fetchone()
-
-    # Check if any results are returned
-    # if (rows):
-        
-    #     print("\nData found for station", stationID, "!")
-
-        # if (rows[0] != None):
-        #     print("Number of riders:", rows[0])
-        
-        # If there are matches
-        # for row in rows:
-        #     weekdayRiders = row[0]
-        #     print(stationID, ": ", weekdayRiders)
-        
-        # return [row[0] for row in rows]
     
     print() # Formatting
 
     # End station_Search_Percentages()
 
 
-
-##################################################################  
+''' ##################################################################  
 #
 # print_stats
 #
@@ -195,7 +182,7 @@ def station_Search_Percentages(dbConn):
  # Total ridership: 3,377,404,512
 # Given a connection to the CTA database, executes various
 # SQL queries to retrieve and output basic stats.
-#
+# '''
 def print_stats(dbConn):
     dbCursor = dbConn.cursor()
     
@@ -233,14 +220,17 @@ def print_stats(dbConn):
     row = dbCursor.fetchone();
     print("  Total ridership:", f"{row[0]:,}")
 
+    # End print_stats()
 
-##################################################################  
+
+
+''' ##################################################################  
 #
 # commandDriver
 #
 # This handles calling the relevant functions/processes based on the input
 # from the user.
-#
+# '''
 def commandDriver(userChoice, dbConn):
     
     # If the input is 1-9, execute the relevant processes
@@ -297,10 +287,10 @@ def commandDriver(userChoice, dbConn):
     # End commandDriver()
 
 
-##################################################################  
+''' ##################################################################  
 #
 # main
-#
+# '''
 def main():
 
     print('** Welcome to CTA L analysis app **');
@@ -329,6 +319,8 @@ def main():
     
         # CHECK LECTURE SLIDES (from 1/23/2024)
         #
+
+    # End main()
 
 #
 # done
