@@ -97,6 +97,7 @@ def partial_Name_Search(dbConn):
     # End partial_Name_Search()
 
 
+
 ''' ################################################################## 
 #
 # station_Search_Percentages
@@ -170,6 +171,7 @@ def station_Search_Percentages(dbConn):
     # End station_Search_Percentages()
 
 
+
 ''' ##################################################################  
 #
 # print_stats
@@ -224,6 +226,55 @@ def print_stats(dbConn):
 
 
 
+''' ##################################################################
+#
+# weekdayRidershipByName
+#
+# Outputs the total ridership on weekdays for each station, with station names instead
+# of station IDs. Also shows the percentages, taken out of the total ridership on weekdays 
+# for all the stations. Results in descending order by ridership
+#
+# '''
+def weekdayRidershipByName(dbConn):
+    
+    dbCursor = dbConn.cursor()
+
+    # Query for weekday riders
+    dbCursor.execute(
+        """
+        SELECT Stations.station_Name, SUM(Ridership.Num_Riders) AS Weekday_Rider_Sum 
+        FROM Ridership JOIN Stations ON Ridership.station_ID = Stations.station_ID 
+        WHERE Ridership.Type_of_Day = 'W' 
+        GROUP BY Stations.station_Name 
+        ORDER BY Weekday_Rider_Sum DESC;
+        """
+    )
+
+    weekdayRidersQuery = dbCursor.fetchall()
+
+    # Query for total riders
+    dbCursor.execute("SELECT SUM(Num_Riders) AS Total_Rider_Sum FROM Ridership WHERE Ridership.Type_of_Day = 'W';")
+    totalRidersQuery = dbCursor.fetchone()
+
+    # Ensure good output before trying to use it
+    if weekdayRidersQuery and totalRidersQuery:
+
+        totalRiders = totalRidersQuery[0]
+
+        # Output each station
+        for row in weekdayRidersQuery:
+            station_Name = row[0]
+            weekdayRidersSum = row[1]
+            
+            # Calculate percentage
+            weekdayRiderPercentage = (weekdayRidersSum / totalRiders) * 100
+
+            print(f"{station_Name}: {weekdayRidersSum:,} ({weekdayRiderPercentage:.2f})%")
+
+    # End weekdayRidershipByName()
+
+
+
 ''' ##################################################################  
 #
 # commandDriver
@@ -241,8 +292,7 @@ def commandDriver(userChoice, dbConn):
         station_Search_Percentages(dbConn)
 
     elif (userChoice == '3'):
-        print("Chose command 3 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        weekdayRidershipByName(dbConn)
 
     elif (userChoice == '4'):
         print("Chose command 4 - Not Yet Implemented.\nExiting...\n")
@@ -285,6 +335,7 @@ def commandDriver(userChoice, dbConn):
         commandDriver(userChoice, dbConn)
 
     # End commandDriver()
+
 
 
 ''' ##################################################################  
