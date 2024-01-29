@@ -1,10 +1,17 @@
 #
-# header comment! Overview, name, etc.
+# Musa Elqaq
+# CS 341 - Spring 2024
+# Program 1: CTA Database App
+#
+# Purpose: 
+#  Using SQL and python, this program allows a user to perform operations
+#  and gather information from the CTA's database.
 #
 
 import sqlite3
 import string
 import matplotlib.pyplot as plt
+
 
 
 ''' ################################################################## 
@@ -84,7 +91,7 @@ def search_Station(dbConn, searchStation, mode):
 def partial_Name_Search(dbConn):
 
     # Get input from user
-    query = input("Enter partial station name (wildcards _ and %): ")
+    query = input("\nEnter partial station name (wildcards _ and %): ")
 
     # Call search_Station() function
     result = search_Station(dbConn, query, 1)
@@ -113,7 +120,7 @@ def partial_Name_Search(dbConn):
 def station_Search_Percentages(dbConn):
     
     # Get input from user
-    query = input("Enter the name of the station you would like to analyze: ")
+    query = input("\nEnter the name of the station you would like to analyze: ")
 
     # Call search_Station() function to find the station's ID
     stationID = search_Station(dbConn, query, 2)
@@ -157,11 +164,12 @@ def station_Search_Percentages(dbConn):
         sundayRidersPercent = (sundayRiders/totalRiders) * 100
         saturdayRidersPercent = (saturdayRiders/totalRiders) * 100
 
+        print("Percentage of ridership for the " + query + " station: ")
         # Print or use the results as needed
-        print(f"Weekday Ridership: ", f"{weekdayRiders:,}", f"({weekDayRiderPercent:.2f}%)")
-        print(f"Saturday ridership: {saturdayRiders:,}", f"({saturdayRidersPercent:.2f}%)") 
-        print(f"Sunday/holiday ridership: {sundayRiders:,}", f"({sundayRidersPercent:.2f}%)") 
-        print(f"Total Ridership: {totalRiders:,}")
+        print(f"  Weekday ridership: ", f"{weekdayRiders:,}", f"({weekDayRiderPercent:.2f}%)")
+        print(f"  Saturday ridership: {saturdayRiders:,}", f"({saturdayRidersPercent:.2f}%)") 
+        print(f"  Sunday/holiday ridership: {sundayRiders:,}", f"({sundayRidersPercent:.2f}%)") 
+        print(f"  Total ridership: {totalRiders:,}")
 
     # Get the result
     rows = dbCursor.fetchone()
@@ -188,8 +196,10 @@ def station_Search_Percentages(dbConn):
 def print_stats(dbConn):
     dbCursor = dbConn.cursor()
     
-    print("General stats:")
+    # Start printing out the stats
+    print("General Statistics:")
     
+    # Prints the number of stations, stops, and overall ride entries (in order)
     dbCursor.execute("Select count(*) From Stations;")
     row = dbCursor.fetchone();
     print("  # of stations:", f"{row[0]:,}")
@@ -202,6 +212,7 @@ def print_stats(dbConn):
     row = dbCursor.fetchone();
     print("  # of ride entries:", f"{row[0]:,}")
 
+    # Prints the date range of the database
     dbCursor.execute("SELECT DATE(MIN(Ride_Date)) AS min_date, DATE(MAX(Ride_Date)) AS max_date FROM Ridership;")
     row = dbCursor.fetchone();
 
@@ -218,6 +229,7 @@ def print_stats(dbConn):
         print("No dates found in the database.")
         return None
 
+    # Prints out total Ridership
     dbCursor.execute("SELECT SUM(Num_Riders) AS RiderCount FROM Ridership;")
     row = dbCursor.fetchone();
     print("  Total ridership:", f"{row[0]:,}")
@@ -237,6 +249,7 @@ def print_stats(dbConn):
 # '''
 def weekdayRidershipByName(dbConn):
     
+    print("Ridership on Weekdays for Each Station")
     dbCursor = dbConn.cursor()
 
     # Query for weekday riders
@@ -269,9 +282,149 @@ def weekdayRidershipByName(dbConn):
             # Calculate percentage
             weekdayRiderPercentage = (weekdayRidersSum / totalRiders) * 100
 
-            print(f"{station_Name}: {weekdayRidersSum:,} ({weekdayRiderPercentage:.2f})%")
+            print(f"{station_Name} : {weekdayRidersSum:,} ({weekdayRiderPercentage:.2f}%)")
 
     # End weekdayRidershipByName()
+
+
+
+''' ##################################################################
+#
+# stopsInLineAndDirection
+#
+# 
+# '''
+def stopsInLineAndDirection(dbConn):
+
+    colorQuery = input("Enter a line color (e.g. Red or Yellow): ").lower()
+    
+    dbCursor = dbConn.cursor()
+
+    # Query for weekday riders
+    dbCursor.execute( "SELECT Color FROM Lines")
+
+    colors = dbCursor.fetchall()
+
+    # Extract color values from the list of tuples
+    color_values = [color[0].lower() for color in colors]
+
+    # Confirm the inputted color is a valid line color
+    if colorQuery in color_values:
+        # print("Valid color!\n")
+
+        # Worth noting that this is case-insensitive due to .lower()
+        directionQuery = input("Enter a direction (N/S/W/E): ").lower()
+
+        # Check which direction the user wants to try searching for (North, South, West, East)
+        if (directionQuery == "n" or directionQuery == "north"):
+            directionQuery = 'N'
+
+        elif (directionQuery == "s" or directionQuery == "south"):
+            directionQuery = 'S'
+        
+        elif (directionQuery == "w" or directionQuery == "west"):
+            directionQuery = 'W'
+        
+        elif (directionQuery == "e" or directionQuery == "east"):
+            directionQuery = 'E'
+
+        # Invalid direction- the project documentation did not specify what to do in this situation.
+        # There are 2 options here: 1) Simply return back to the main function and prompt for a new command
+        #                           2) Using the current method, re-prompt for a valid color & direction [loops]
+        else:
+            print("**Invalid Direction entered.  Try again.\n")
+            stopsInLineAndDirection(dbConn)
+
+        # Title-case for the query
+        colorQuery = colorQuery.title()
+
+        # Handle extra whitespaces
+        colorQuery = colorQuery.strip()
+        directionQuery = directionQuery.strip()
+        
+        dbCursor.execute("""
+            SELECT Stops.Stop_Name
+            FROM Stops
+            JOIN StopDetails ON Stops.Stop_ID = StopDetails.Stop_ID
+            JOIN Lines ON StopDetails.Line_ID = Lines.Line_ID
+            WHERE Lines.Color = ? AND Stops.Direction = ?;
+        """, (colorQuery, directionQuery,))
+
+        # Get results
+        results = dbCursor.fetchall()
+
+        # Check if there are no stops in the given direction      or len(results) == 0
+        if results is None or len(results) == 0:
+            print("**That line does not run in the direction chosen...")
+        else:
+            # Outputs the actual data from the database now that a color and direction are confirmed to be valid 
+            for row in results:
+                print(row[0], ": direction = " + directionQuery)
+
+        # Formatting
+        print("") 
+
+    # Invalid color
+    else:
+        print("**No such line...\n")
+
+
+
+''' ##################################################################
+#
+# stopsByColor_DirectionSorted
+#
+# Outputs the number of stops for each line color, separated by direction. 
+# Results shown in ascending order by color name, and then in ascending order by direction. 
+# Also shows the percentage for each color/stop, which is taken out of the total number of stops
+# '''
+def stopsByColor_DirectionSorted(dbConn):
+    
+    print("Number of Stops For Each Color By Direction")
+    dbCursor = dbConn.cursor()
+
+    # Query for weekday riders; verified in SQLiteStudio
+    dbCursor.execute("""
+        SELECT
+            Lines.Color,
+            Stops.Direction,
+            COUNT(Stops.Stop_ID) AS NumOfStops,
+            (SELECT COUNT(*) FROM Stops) AS TotalStops
+        FROM
+            Lines
+        JOIN
+            StopDetails ON Lines.Line_ID = StopDetails.Line_ID
+        JOIN
+            Stops ON StopDetails.Stop_ID = Stops.Stop_ID
+        GROUP BY
+            Lines.Color,
+            Stops.Direction
+        ORDER BY
+            Lines.Color ASC,
+            Stops.Direction ASC;       
+    """)
+
+    stops = dbCursor.fetchall()
+
+    # Assuming query worked, output the results
+    if (stops != None):
+
+        # Loop through the data/process it and output to user
+        for row in stops:
+
+            color = row[0]
+            direction = row[1]
+            num_of_stops = row[2]
+            total_stops = row[3]
+            percentage = (num_of_stops / total_stops) * 100
+            
+            # Output
+            print(f"{color} going {direction} : {num_of_stops} ({percentage:.2f}%)")
+
+    print() # Formatting
+
+    # End stopsByColor_DirectionSorted()
+
 
 
 
@@ -295,12 +448,10 @@ def commandDriver(userChoice, dbConn):
         weekdayRidershipByName(dbConn)
 
     elif (userChoice == '4'):
-        print("Chose command 4 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        stopsInLineAndDirection(dbConn)
 
     elif (userChoice == '5'):
-        print("Chose command 5 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        stopsByColor_DirectionSorted(dbConn)
 
     elif (userChoice == '6'):
         print("Chose command 6 - Not Yet Implemented.\nExiting...\n")
@@ -320,7 +471,7 @@ def commandDriver(userChoice, dbConn):
     
     # If the user wants to exit
     elif (userChoice == 'x'):
-        print("\nExiting...")
+        # print("\nExiting...")
         exit(0)
     
     # Enable to accept capital X as an exit command
@@ -349,10 +500,12 @@ def main():
 
     dbConn = sqlite3.connect('CTA2_L_daily_ridership.db');
 
-    print_stats(dbConn);
+    if (dbConn != None):
+        print_stats(dbConn);
 
     # print("\nSelect a station name to search for:")
 
+    print()
     userChoice = input("Please enter a command (1-9, x to exit): ")
     commandDriver(userChoice, dbConn)
 
