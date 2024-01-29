@@ -6,7 +6,7 @@
 # Purpose: 
 #  Using SQL and python, this program allows a user to perform operations
 #  and gather information from the CTA's database.
-#
+# 
 
 import sqlite3
 import string

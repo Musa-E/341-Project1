@@ -53,7 +53,7 @@
 
 ------
 
-# Footnotes:
+# Footnotes: 
 > [^1]: This is not *explicitly* mentioned in the project document's description of **Command 4**.  
 >       However, the sample output **DOES** contain ADA information.  I will ask for further clarification  
 >       about this, but for now I'm leaving it _**without**_ the information until it's confirmed that I need it.  
