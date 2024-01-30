@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 # If mode == 0 , enables exact general search term only
 # If mode == 1 , enables partial general search
 # If mode == 2 , returns the station_ID
+# If mode == 3 , enables partial general search with NO outputs
 # '''
 def search_Station(dbConn, searchStation, mode):
     dbCursor = dbConn.cursor()
@@ -35,8 +36,32 @@ def search_Station(dbConn, searchStation, mode):
     elif (mode == 1): # Search for station(s) using partial names
         dbCursor.execute("SELECT Station_Name, Station_ID FROM Stations WHERE Stations.Station_Name LIKE ? ORDER BY Stations.Station_Name ASC;", (searchStation,))
 
-    elif (mode == 2): # Exact matche search for given station's ID
+    elif (mode == 2): # Exact match search for given station's ID
         dbCursor.execute("SELECT Station_ID FROM Stations WHERE Stations.Station_Name = ? ORDER BY Stations.Station_Name ASC;", (searchStation,))
+
+    elif (mode == 3): # Search for station(s) using partial names and return some additional information
+        
+        dbCursor.execute("""
+        SELECT
+            strftime('%Y', Ridership.Ride_Date) AS Year,
+            SUM(Ridership.Num_Riders) AS TotalRidership,
+            COUNT(DISTINCT Stations.Station_ID) AS NumStations,
+            Stations.Station_Name,
+            Stops.ADA AS isADACompliant
+        FROM
+            Stations
+        JOIN
+            Ridership ON Stations.Station_ID = Ridership.Station_ID
+        JOIN
+            Stops ON Stations.Station_ID = Stops.Station_ID
+        WHERE
+            Stations.Station_Name LIKE ?
+        GROUP BY
+            Year, Stations.Station_Name
+        ORDER BY
+            Year ASC; 
+        """, (searchStation,))
+
 
     # Get the result
     rows = dbCursor.fetchall()
@@ -71,6 +96,15 @@ def search_Station(dbConn, searchStation, mode):
 
             return [row[0] for row in rows]
         
+        # If there was more than one partial match, handle it [station stats by year]
+        elif (mode == 3):
+            
+            if (rows == None):
+                return None
+            
+            # The user may choose to plot this data, so the entire table will be returned
+            return rows
+
     else:
         # If no match is found, handle it
         # print("Station not found in the database.")
@@ -296,7 +330,7 @@ def weekdayRidershipByName(dbConn):
 # '''
 def stopsInLineAndDirection(dbConn):
 
-    colorQuery = input("Enter a line color (e.g. Red or Yellow): ").lower()
+    colorQuery = input("\nEnter a line color (e.g. Red or Yellow): ").lower()
     
     dbCursor = dbConn.cursor()
 
@@ -332,8 +366,10 @@ def stopsInLineAndDirection(dbConn):
         # There are 2 options here: 1) Simply return back to the main function and prompt for a new command
         #                           2) Using the current method, re-prompt for a valid color & direction [loops]
         else:
-            print("**Invalid Direction entered.  Try again.\n")
-            stopsInLineAndDirection(dbConn)
+            # print("**Invalid Direction entered.  Try again.\n")
+            print("**That line does not run in the direction chosen...\n")
+            # stopsInLineAndDirection(dbConn) # Brings user back to color select
+            return
 
         # Title-case for the query
         colorQuery = colorQuery.title()
@@ -343,11 +379,19 @@ def stopsInLineAndDirection(dbConn):
         directionQuery = directionQuery.strip()
         
         dbCursor.execute("""
-            SELECT Stops.Stop_Name
-            FROM Stops
-            JOIN StopDetails ON Stops.Stop_ID = StopDetails.Stop_ID
-            JOIN Lines ON StopDetails.Line_ID = Lines.Line_ID
-            WHERE Lines.Color = ? AND Stops.Direction = ?;
+            SELECT 
+                Stops.Stop_Name,
+                Stops.ADA AS isADACompliant
+            FROM 
+                Stops
+            JOIN 
+                StopDetails ON Stops.Stop_ID = StopDetails.Stop_ID
+            JOIN 
+                Lines ON StopDetails.Line_ID = Lines.Line_ID
+            WHERE 
+                Lines.Color = ? AND Stops.Direction = ?
+            ORDER BY
+                Stops.Stop_Name;
         """, (colorQuery, directionQuery,))
 
         # Get results
@@ -357,9 +401,19 @@ def stopsInLineAndDirection(dbConn):
         if results is None or len(results) == 0:
             print("**That line does not run in the direction chosen...")
         else:
+
             # Outputs the actual data from the database now that a color and direction are confirmed to be valid 
             for row in results:
-                print(row[0], ": direction = " + directionQuery)
+
+                is_ada_compliant = row[1]
+                ADAStatus = "not handicap accessible" 
+
+                if (is_ada_compliant):
+                    ADAStatus = "handicap accessible"
+                else:
+                    ADAStatus = "not handicap accessible"
+
+                print(f"{row[0]} : direction = {directionQuery} ({ADAStatus})")
 
         # Formatting
         print("") 
@@ -427,6 +481,60 @@ def stopsByColor_DirectionSorted(dbConn):
 
 
 
+#
+#
+#
+def stationRidershipByYear(dbConn):
+    
+    dbCursor = dbConn.cursor()
+
+    query = input("\nEnter a station name (wildcards _ and %): ")
+
+    # Call search_Station() function
+    result = search_Station(dbConn, query, 3)
+
+    # notWorking = input("\nThe below code is not functioning correctly.  Press any key to exit...\n")
+    # if (notWorking != None):
+    #     exit(0)
+
+    # No matching stations; return early
+    if not result:
+        print("**No station found...\n")
+        return
+
+    # More than one matching station; return early
+    elif result[0][2] > 1:
+        print("**Multiple stations found...\n")
+        return
+
+    else:
+
+        station_name = result[0][3]
+        print("Yearly Ridership at " + station_name)
+
+        ADAStatus = "handicap accessible" # Default val
+        
+        # Format the output based on ADA compliancy status
+        if (result[0][4] == 1):
+            ADAStatus = "handicap accessible"
+        else: # not handicap accessible
+            ADAStatus = "not handicap accessible"
+
+        # Assuming query worked, output the results
+        if result is not None:
+            for row in result:
+                year = row[0]
+                totalRiders = row[1]
+                print(f"{year} : {totalRiders:,} ({ADAStatus})")
+
+                
+
+    print() # Formatting
+
+    # End stationRidershipByYear()
+
+
+
 
 ''' ##################################################################  
 #
@@ -454,8 +562,7 @@ def commandDriver(userChoice, dbConn):
         stopsByColor_DirectionSorted(dbConn)
 
     elif (userChoice == '6'):
-        print("Chose command 6 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        stationRidershipByYear(dbConn)
 
     elif (userChoice == '7'):
         print("Chose command 7 - Not Yet Implemented.\nExiting...\n")
