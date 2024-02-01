@@ -71,17 +71,12 @@
 ------
 
 # Footnotes: 
->  
-> [^1]: This is not *explicitly* mentioned in the project document's description of **Command 6**.  
->       The sample output **DOES NOT** contain ADA information, so it will not be included.  
->       *(Autograder output confirms this is not needed)*
-> 
 > [^2]: Changed how I handle **Command 4**, when an invalid direction is entered  
 >       Handling this was not mentioned in the project documentation: 2 options are listed in the code  
 >       The AutoGrader offered a format/message to output when these conditions are met, so the code  
 >       has been updated to reflect that.
 >
-> [^3]: The number of riders seems to be multiple times what it should be.  For command 6 and 7,
+> [^3]: The number of riders seems to be multiple times what it should be.  For **Commands 6 and 7**,
 >       sometimes it can go from being double what it should be, to quadruple.  Working to resolve this
 >       issue, but for now, the core functionality is present.  Once this is fixed, everything should
 >       be good to go.
