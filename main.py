@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np # Tutorial for plotting said this was needed
 
 
+
 ''' ################################################################## 
 #
 # search_Station
@@ -26,8 +27,6 @@ import numpy as np # Tutorial for plotting said this was needed
 # '''
 def search_Station(dbConn, searchStation, mode):
     dbCursor = dbConn.cursor()
-
-    # print("\nSearching for " + searchStation + " in database...\n")
 
     # Search database for station and order them alphabetically
     if (mode == 0):  # Exact matches only
@@ -64,6 +63,57 @@ def search_Station(dbConn, searchStation, mode):
         ORDER BY
             Year ASC; 
         """, (searchStation,))
+
+    elif (mode == 4): # Search for station(s) using partial names and return some additional information
+        
+        # For some reason, the number of riders gets doubled.  For that reason, I've included a
+        # ' / 2' in the select section.  This has fixed the problem for now, but could cause
+        # problems later on, especially if different databases are used.
+
+        dbCursor.execute("""
+            SELECT 
+                Station_Name
+            FROM 
+                Stations 
+            WHERE 
+                Stations.Station_Name LIKE ? 
+            ORDER BY 
+                Stations.Station_Name ASC;""", 
+        (searchStation,))
+
+        result = dbCursor.fetchall()
+
+        if not result:
+            print("**No station found...\n")
+            return
+
+        elif len(result) > 1:
+            print("**Multiple stations found...\n")
+            return
+        
+
+
+        searchYear = input("Enter a year: ")
+
+        dbCursor.execute("""
+        SELECT
+            strftime('%Y', Ridership.Ride_Date) AS Year,
+            strftime('%m', Ridership.Ride_Date) AS Month,
+            SUM(Ridership.Num_Riders) / 2 AS TotalRidership,
+            Stations.Station_Name
+        FROM
+            Stations
+        JOIN
+            Ridership ON Stations.Station_ID = Ridership.Station_ID
+        JOIN
+            Stops ON Stations.Station_ID = Stops.Station_ID
+        WHERE
+            Stations.Station_Name LIKE ? AND strftime('%Y', Ridership.Ride_Date) = ?
+        GROUP BY
+            Year, Month
+        ORDER BY
+            Year ASC, Month ASC;
+        """, (searchStation, searchYear,))
 
 
     # Get the result
@@ -102,9 +152,20 @@ def search_Station(dbConn, searchStation, mode):
         # If there was more than one partial match, handle it [station stats by year]
         elif (mode == 3):
             
+            # Should be redundant, but just in case
             if (rows == None):
                 return None
             
+            # The user may choose to plot this data, so the entire table will be returned
+            return rows
+        
+        elif (mode == 4):
+            
+            # Should be redundant, but just in case
+            if (rows == None):
+                return None
+            
+            print(rows)
             # The user may choose to plot this data, so the entire table will be returned
             return rows
 
@@ -486,21 +547,22 @@ def stopsByColor_DirectionSorted(dbConn):
 
 
 
+''' ##################################################################
 #
+# stationRidershipByYear
 #
-#
+# Given a station name, outputs the total ridership for each year for that station, in 
+# ascending order by year. Allows the user to use wildcards _ and % for partial names. 
+# Shows an error message if the station name does not exist or if multiple station names 
+# match. After the output, the user is given the option to plot the data
+# '''
 def stationRidershipByYear(dbConn):
-    
-    dbCursor = dbConn.cursor()
 
+    # Get input from user
     query = input("\nEnter a station name (wildcards _ and %): ")
 
     # Call search_Station() function
     result = search_Station(dbConn, query, 3)
-
-    # notWorking = input("\nThe below code is not functioning correctly.  Press any key to exit...\n")
-    # if (notWorking != None):
-    #     exit(0)
 
     # No matching stations; return early
     if not result:
@@ -515,27 +577,20 @@ def stationRidershipByYear(dbConn):
         print("**Multiple stations found...\n")
         return
 
+    # Only one station matched, output it's data and ask if the user wants to plot it
     else:
 
         station_name = result[0][3]
         print("Yearly Ridership at " + station_name)
 
-        ADAStatus = "handicap accessible" # Default val
-        
-        # Format the output based on ADA compliancy status
-        if (result[0][4] == 1):
-            ADAStatus = "handicap accessible"
-        else: # not handicap accessible
-            ADAStatus = "not handicap accessible"
-
         # Assuming query worked, output the results
         if result is not None:
-
             
             # Will hold a list of the data being printed out, should the user want to plot it
             years = []
             riders = []
 
+            # Update/Output values for each year found
             for row in result:
                 year = row[0]
                 totalRiders = row[1]
@@ -546,8 +601,8 @@ def stationRidershipByYear(dbConn):
 
                 print(f"{year} : {totalRiders:,}")
 
+
             # Does the user want to plot the data?
-            
             plotStatus = input("Plot? (y/n) ")
 
             # If "y" create a plot, else do nothing
@@ -563,28 +618,78 @@ def stationRidershipByYear(dbConn):
                 plt.ylabel("Number of Riders")  # Add label for y-axis
 
                 plt.show()
-                '''
-                Select
-                    NumRiders AS something
-                    Years AS something
 
-
-                    Query for years and num_riders
-                    rows = query.fetchall
-                    then put that into .plot by rows[0], rows[1]
-
-                    If that doesn't work, try looping through
-                '''
-
-                # plt.plot(xpoints, ypoints)
-                # plt.show()
-
-                
 
     print() # Formatting
 
     # End stationRidershipByYear()
 
+
+
+''' ##################################################################
+#
+# stationRidershipByYear
+#
+# Given a station name and year, output the total ridership for each 
+# month in that year. SQL wildcards (_ and %) supported for the station name.
+# Displays the found data, then asks if the user wants to plot it.
+#
+# '''
+def stationRidershipByMonth(dbConn):
+    
+    # Get input from user
+    query = input("\nEnter a station name (wildcards _ and %): ")
+
+    # Call search_Station() function
+    result = search_Station(dbConn, query, 4)
+
+    # No/Multiple matching stations; return early.  This is handled inside of search_Station mode 4
+    if not result:
+        # print("**No station found...\n")
+        return
+
+    # Only one match found
+    else:
+        
+        # print(result)
+        print("Monthly Ridership at " + result[0][3] + " for " + result[0][0])
+        
+        # Will hold a list of the data being printed out, should the user want to plot it
+        months = []
+        riders = []
+
+        # Update/Output values for each year found
+        for row in result:
+            year = row[0]
+            month = row[1]
+            totalRiders = row[2]
+
+            # print(row)
+
+            # Update lists
+            months.append(month)
+            riders.append(totalRiders)
+
+            print(f"{month}/{year} : {totalRiders:,}")
+
+
+        # Does the user want to plot the data?
+        plotStatus = input("Plot? (y/n) ")
+
+        # If "y" create a plot, else do nothing
+        if (plotStatus == "y"):
+
+            # # Additional settings for the plot
+            plt.figure(figsize=(10, 6))  # Adjust the size of the plot
+            plt.plot(months, riders, color='b', label='Ridership')  # Specify marker, linestyle, and color
+            plt.title(f"Monthly Ridership at {result[0][3]} Station ({result[0][0]})")  # Add a title
+            plt.xlabel("Month")  # Add label for x-axis
+            plt.ylabel("Number of Riders")  # Add label for y-axis
+
+            plt.show()
+
+    print() # Formatting
+    # End stationRidershipByYear()
 
 
 
@@ -617,8 +722,7 @@ def commandDriver(userChoice, dbConn):
         stationRidershipByYear(dbConn)
 
     elif (userChoice == '7'):
-        print("Chose command 7 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        stationRidershipByMonth(dbConn)
 
     elif (userChoice == '8'):
         print("Chose command 8 - Not Yet Implemented.\nExiting...\n")
