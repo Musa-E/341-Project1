@@ -71,6 +71,7 @@
 ------
 
 # Footnotes: 
+>  
 > [^1]: This is not *explicitly* mentioned in the project document's description of **Command 6**.  
 >       The sample output **DOES NOT** contain ADA information, so it will not be included.  
 >       *(Autograder output confirms this is not needed)*
