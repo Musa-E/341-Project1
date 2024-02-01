@@ -11,7 +11,7 @@
 import sqlite3
 import string
 import matplotlib.pyplot as plt
-
+import numpy as np # Tutorial for plotting said this was needed
 
 
 ''' ################################################################## 
@@ -41,10 +41,13 @@ def search_Station(dbConn, searchStation, mode):
 
     elif (mode == 3): # Search for station(s) using partial names and return some additional information
         
+        # For some reason, the number of riders gets doubled.  For that reason, I've included a
+        # ' / 2' in the select section.  This has fixed the problem for now, but could cause
+        # problems later on, especially if different databases are used.
         dbCursor.execute("""
         SELECT
             strftime('%Y', Ridership.Ride_Date) AS Year,
-            SUM(Ridership.Num_Riders) AS TotalRidership,
+            SUM(Ridership.Num_Riders) / 2 AS TotalRidership,
             COUNT(DISTINCT Stations.Station_ID) AS NumStations,
             Stations.Station_Name,
             Stops.ADA AS isADACompliant
@@ -415,6 +418,8 @@ def stopsInLineAndDirection(dbConn):
 
                 print(f"{row[0]} : direction = {directionQuery} ({ADAStatus})")
 
+            
+
         # Formatting
         print("") 
 
@@ -503,7 +508,10 @@ def stationRidershipByYear(dbConn):
         return
 
     # More than one matching station; return early
-    elif result[0][2] > 1:
+    # Uses a set because the result returns all the results for a station over the years,
+    # so it can tell if there are more than one station but ignore the same results for 
+    # a particular station.
+    elif (len(set(row[3] for row in result)) > 1):
         print("**Multiple stations found...\n")
         return
 
@@ -522,10 +530,54 @@ def stationRidershipByYear(dbConn):
 
         # Assuming query worked, output the results
         if result is not None:
+
+            
+            # Will hold a list of the data being printed out, should the user want to plot it
+            years = []
+            riders = []
+
             for row in result:
                 year = row[0]
                 totalRiders = row[1]
-                print(f"{year} : {totalRiders:,} ({ADAStatus})")
+
+                # Update lists
+                years.append(year)
+                riders.append(totalRiders)
+
+                print(f"{year} : {totalRiders:,}")
+
+            # Does the user want to plot the data?
+            
+            plotStatus = input("Plot? (y/n) ")
+
+            # If "y" create a plot, else do nothing
+            if (plotStatus == "y"):
+                
+                print("\nOutputting plot...")
+
+                # Additional settings for the plot
+                plt.figure(figsize=(10, 6))  # Adjust the size of the plot
+                plt.plot(years, riders, color='b', label='Ridership')  # Specify marker, linestyle, and color
+                plt.title(f"Yearly Ridership at {station_name} Station")  # Add a title
+                plt.xlabel("Year")  # Add label for x-axis
+                plt.ylabel("Number of Riders")  # Add label for y-axis
+
+                plt.show()
+                '''
+                Select
+                    NumRiders AS something
+                    Years AS something
+
+
+                    Query for years and num_riders
+                    rows = query.fetchall
+                    then put that into .plot by rows[0], rows[1]
+
+                    If that doesn't work, try looping through
+                '''
+
+                # plt.plot(xpoints, ypoints)
+                # plt.show()
 
                 
 

@@ -1,9 +1,9 @@
-# Version 5.2B - Command 6 Data Completed
+# Version 6.1R - Command 6 Completed
 
 > This version currently supports the following functionality:
 >
->    - Everything from version 2.1 - 4.2B[^2]  
->    - Currently working on **Command 6** plotting [see [changelog](#changelog)]  
+>    - Everything from version 2.1 - 5.2B[^2]  
+>    - Finished working on **Command 6** plotting [see [changelog](#changelog)]  
 >    
 >
 
@@ -15,14 +15,16 @@
 >    - The user can now output the stops of the given line color and direction
 >
 >    - Lots and lots of formatting, as the **AUTOGRADER** was released.
->       -  *(Currently at: **25/50** points, excluding plots and style points)*
+>       -  *(Currently at: **30/50** points, excluding plots and style points)*
 >
 >    - Given a station name, outputs the total ridership for each year for that station, in 
 >        ascending order by year. Allows the user to use wildcards _ and % for partial names. 
 >        *(Shows an error message if the station name does not exist or if multiple station names 
 >        match.)*
 >
->    - Added ADA (accessibility) information to the output for command 4[^1].
+>    - Removed ADA (accessibility) information to the output for command 6[^1].
+> 
+>    - Added plotting capabilities *(including labels/titles)*
 >    
 
 ------
@@ -31,11 +33,20 @@
 
 > The next version will focus on:
 >
->   - Adding functionality for **command 6**'s plotting, specifically:  
+>   - Adding functionality for **command 7**, specifically:  
 >      ```
->        After the output, the user is given the option to plot the data. Make sure the axis labels 
->        and title of the figure are set appropriately. If the user responds with any input other than 
->        “y”, do not plot. 
+>        Given a station name and year, output the total ridership for each month in that year.
+>      The user should be able to enter SQL wildcards (_ and %) for the station name.
+> 
+>      Once the station name and year have been entered, display the monthly totals. Then, 
+>      give the user the option to see a plot of the results. If the user responds with “y” your 
+>      program should plot as shown below (with appropriate title, legend, and axis labels). If 
+>      the user responds with any other input, do not plot.
+> 
+>      If no matching station names are found, or if multiple matching station names are found, 
+>      display the corresponding error message. Note that if the user enters a year for which 
+>      there is no data, no error message is necessary. The output and plot will be empty, 
+>      which is sufficient.
 >      ```
 >
 >
@@ -47,24 +58,24 @@
 
 > Current progress:
 >
-> - [x] Gets the Colors
-> - [x] Gets the Direction(s)
-> - [x] Handles No Matches Found
-> - [x] Handles Multiple Matches Found
-> - [x] Handles One Match Found
-> - [x] Outputs information in Asc. Order of Stop Names
-> - [x] Outputs ADA Compliancy information
-> - [x] Outputs the information correctly, according to the AutoGrader
+> - [ ] Gets the station name and year
+> - [ ] Handles SQL wildcards in
+> - [ ] Handles no matches (if a year where this no data is given, no error message needed)
+> - [ ] Handles multiple matches (if a year where this no data is given, no error message needed)
+> - [ ] Outputs the total by month for the given year
+> - [ ] Outputs the monthly totals
+> - [ ] Outputs the information correctly, according to the AutoGrader
 > 
-> - [ ] Handle Plotting from the user's input
+> - [ ] Handle Plotting from the user's input, using above data
 >
 > [see [changelog](#changelog)]
 
 ------
 
 # Footnotes: 
-> [^1]: This is not *explicitly* mentioned in the project document's description of **Command 4**.  
->       However, the sample output **DOES** contain ADA information, so it will be included.  
+> [^1]: This is not *explicitly* mentioned in the project document's description of **Command 6**.  
+>       The sample output **DOES NOT** contain ADA information, so it will not be included.  
+>       *(Autograder output confirms this is not needed)*
 > 
 > [^2]: Changed how I handle **Command 4**, when an invalid direction is entered  
 >       Handling this was not mentioned in the project documentation: 2 options are listed in the code  
