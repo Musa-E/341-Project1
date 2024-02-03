@@ -27,6 +27,7 @@ import numpy as np # Tutorial for plotting said this was needed
 # '''
 def search_Station(dbConn, searchStation, mode):
     dbCursor = dbConn.cursor()
+    result = None
 
     # Search database for station and order them alphabetically
     if (mode == 0):  # Exact matches only
@@ -65,10 +66,6 @@ def search_Station(dbConn, searchStation, mode):
         """, (searchStation,))
 
     elif (mode == 4): # Search for station(s) using partial names and return some additional information
-        
-        # For some reason, the number of riders gets doubled.  For that reason, I've included a
-        # ' / 2' in the select section.  This has fixed the problem for now, but could cause
-        # problems later on, especially if different databases are used.
 
         dbCursor.execute("""
             SELECT 
@@ -86,12 +83,10 @@ def search_Station(dbConn, searchStation, mode):
         if not result:
             print("**No station found...\n")
             return
-
-        elif len(result) > 1:
+        
+        if (len(result) > 1):
             print("**Multiple stations found...\n")
             return
-        
-
 
         searchYear = input("Enter a year: ")
 
@@ -99,14 +94,12 @@ def search_Station(dbConn, searchStation, mode):
         SELECT
             strftime('%Y', Ridership.Ride_Date) AS Year,
             strftime('%m', Ridership.Ride_Date) AS Month,
-            SUM(Ridership.Num_Riders) / 2 AS TotalRidership,
+            SUM(Ridership.Num_Riders) AS TotalRidership,
             Stations.Station_Name
         FROM
             Stations
         JOIN
             Ridership ON Stations.Station_ID = Ridership.Station_ID
-        JOIN
-            Stops ON Stations.Station_ID = Stops.Station_ID
         WHERE
             Stations.Station_Name LIKE ? AND strftime('%Y', Ridership.Ride_Date) = ?
         GROUP BY
@@ -115,9 +108,79 @@ def search_Station(dbConn, searchStation, mode):
             Year ASC, Month ASC;
         """, (searchStation, searchYear,))
 
+        result = dbCursor.fetchall()
 
-    # Get the result
+        if not result:
+            print("Monthly Ridership at " + searchStation + " for " + searchYear)
+
+            plotQuery = input("Plot? (y/n) ") # Nothing to plot though,
+            
+            if (plotQuery == "y"):
+
+                # Will hold a list of the data being printed out, should the user want to plot it
+                months = []
+                riders = []
+
+                # # Additional settings for the plot
+                plt.figure(figsize=(10, 6))  # Adjust the size of the plot
+                plt.plot(months, riders, color='b', label='Ridership')  # Specify marker, linestyle, and color
+                plt.title(f"Monthly Ridership at {searchStation} Station ({searchYear})")  # Add a title
+                plt.xlabel("Month")  # Add label for x-axis
+                plt.ylabel("Number of Riders")  # Add label for y-axis
+
+                plt.show()
+
+            print() # Formatting
+            return
+            
+
+    elif (mode == 5):
+        
+        dbCursor.execute("""
+            SELECT 
+                Station_Name
+            FROM 
+                Stations 
+            WHERE 
+                Stations.Station_Name LIKE ? 
+            ORDER BY 
+                Stations.Station_Name ASC;""", (searchStation,))
+
+        result = dbCursor.fetchall()
+
+        if not result:
+            print("**No station found...\n")
+            return
+
+        elif len(result) > 1:
+            print("**Multiple stations found...\n")
+            return
+        
+        else:
+
+            dbCursor.execute("""
+                SELECT
+                    strftime('%Y', Ridership.Ride_Date) AS Year,
+                    SUM(Ridership.Num_Riders) / 2 AS TotalRidership
+                FROM
+                    Stations
+                JOIN
+                    Ridership ON Stations.Station_ID = Ridership.Station_ID
+                JOIN
+                    Stops ON Stations.Station_ID = Stops.Station_ID
+                WHERE
+                    Stations.Station_Name LIKE ?
+                GROUP BY
+                    Year, Month
+                ORDER BY
+                    Year ASC, Month ASC;
+            """,(searchStation))
+
+
     rows = dbCursor.fetchall()
+    # Get the result
+    if (result is not None):
+        rows = result
 
     # Check if any results are returned
     if (rows):
@@ -165,8 +228,16 @@ def search_Station(dbConn, searchStation, mode):
             if (rows == None):
                 return None
             
-            print(rows)
+            
             # The user may choose to plot this data, so the entire table will be returned
+            return rows
+        
+        elif (mode == 5):
+
+            # Should be redundant, but just in case
+            if (rows == None):
+                return None
+            
             return rows
 
     else:
@@ -644,7 +715,7 @@ def stationRidershipByMonth(dbConn):
     result = search_Station(dbConn, query, 4)
 
     # No/Multiple matching stations; return early.  This is handled inside of search_Station mode 4
-    if not result:
+    if result is None:
         # print("**No station found...\n")
         return
 
@@ -693,6 +764,87 @@ def stationRidershipByMonth(dbConn):
 
 
 
+#
+def twoStationsByDay(dbConn):
+
+    print("\n**NOT IMPLEMENTED CORRECTLY!!**\nExiting...\n")
+    exit(0)
+    
+    station_name = input("Enter station name (wildcards _ and %): ")
+    year = input("Enter year: ")
+
+    # Search for the station using partial name search mode (mode 1)
+    query_result = search_Station(dbConn, station_name, 1)
+
+    if query_result:
+        # Extract the station ID from the query result
+        station_id = query_result[0][1]
+
+        # Query to get the first 5 days of the year for the given station
+        query_first_5_days = f"""
+            SELECT
+                strftime('%Y', Ridership.Ride_Date) AS Year,
+                Ridership.Ride_Date,
+                SUM(Ridership.Num_Riders) AS TotalRidership
+            FROM
+                Ridership
+            JOIN
+                Stations ON Ridership.Station_ID = Stations.Station_ID
+            WHERE
+                Stations.Station_ID = {station_id}
+                AND strftime('%Y', Ridership.Ride_Date) = "{year}"
+            GROUP BY
+                Year, Ridership.Ride_Date
+            ORDER BY
+                Year ASC, Ridership.Ride_Date ASC
+            LIMIT 5;
+        """
+
+        # Query to get the last 5 days of the year for the given station
+        query_last_5_days = f"""
+            SELECT
+                strftime('%Y', Ridership.Ride_Date) AS Year,
+                Ridership.Ride_Date,
+                SUM(Ridership.Num_Riders) AS TotalRidership
+            FROM
+                Ridership
+            JOIN
+                Stations ON Ridership.Station_ID = Stations.Station_ID
+            WHERE
+                Stations.Station_ID = {station_id}
+                AND strftime('%Y', Ridership.Ride_Date) = "{year}"
+            GROUP BY
+                Year, Ridership.Ride_Date
+            ORDER BY
+                Year DESC, Ridership.Ride_Date DESC
+            LIMIT 5;
+        """
+
+        # Execute the queries
+        dbCursor = dbConn.cursor()
+        dbCursor.execute(query_first_5_days)
+        result_first_5_days = dbCursor.fetchall()
+
+        dbCursor.execute(query_last_5_days)
+        result_last_5_days = dbCursor.fetchall()
+
+        # Output the results for the given station
+        print("\nResults for Station (First 5 Days):")
+        for row in result_first_5_days:
+            print(f"Year: {row[0]}, Date: {row[1]}, Total Ridership: {row[2]}")
+
+        print("\nResults for Station (Last 5 Days):")
+        for row in result_last_5_days:
+            print(f"Year: {row[0]}, Date: {row[1]}, Total Ridership: {row[2]}")
+
+    else:
+        print("Station not found in the database.")
+
+    print("\nEnd of current functionality...\n")
+
+
+
+
 ''' ##################################################################  
 #
 # commandDriver
@@ -725,8 +877,7 @@ def commandDriver(userChoice, dbConn):
         stationRidershipByMonth(dbConn)
 
     elif (userChoice == '8'):
-        print("Chose command 8 - Not Yet Implemented.\nExiting...\n")
-        exit(0)
+        twoStationsByDay(dbConn)
 
     elif (userChoice == '9'):
         print("Chose command 9 - Not Yet Implemented.\nExiting...\n")

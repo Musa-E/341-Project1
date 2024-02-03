@@ -1,9 +1,9 @@
-# Version 7.1R - Command 7 Completed*
+# Version 7.2R - Command 7 Completed*
 
 > This version currently supports the following functionality:
 >
->    - Everything from version 2.1 - 6.1R[^2]  
->    - Finished working on **Command 7** [see [changelog](#changelog)] and this footnote[^3].
+>    - Everything from version 2.1 - 6.1R 
+>    - Finished working on **Command 7** [see [changelog](#changelog)] and this footnote[^2].
 >    
 >
 
@@ -14,14 +14,15 @@
 >    
 >
 >    - Lots and lots of formatting, as the **AUTOGRADER** was released.
->       -  *(Currently at: **30/50** points, excluding plots and style points)*
+>       -  *(Currently at: **35/50** points, excluding plots and style points)*
 >
->    - Given a station name and year, output the **total ridership[^3]** for each month in that year, in 
->        ascending order by year. Allows the user to use wildcards _ and % for partial names. 
->        *(Shows an error message if the station name does not exist or if multiple station names 
->        match.)*
+>    - If the user searches for a valid station/year, but that station simply has no data, the program will now correctly handle it.  It will display the ```"Monthly Ridership ..."``` statement, and properly plot the data.
 > 
 >    - Added plotting capabilities *(including labels/titles)*
+>
+>    - **Fixed** the ridership being multiple times what it should be; the **```JOIN```**
+>      section of the sql queries essentially doubled all the numbers since
+>      the search got all the data again, but from the Stops table.
 >    
 
 ------
@@ -45,9 +46,6 @@
 >        The output and plot will be empty, which is sufficient.
 >      ```
 >
->   - Fix the issue of ridership being multiple times what it should be.  For **command 7**, the input
->     seems to be *doubled*, or even *quadrupled* for some reason.  A similar thing is occuring for
->     **command 6**.
 >     
 
 ------
@@ -61,8 +59,9 @@
 > - [x] Handles no matches (if a year where this no data is given, no error message needed)
 > - [x] Handles multiple matches (if a year where this no data is given, no error message needed)
 > - [x] Outputs the total by month for the given year
-> - [ ] Outputs the monthly totals[^3]
-> - [ ] Outputs the information correctly, according to the AutoGrader
+> - [x] Outputs the monthly totals[^2]
+> - [x] Outputs the information correctly, according to the AutoGrader
+> - [x] Outputs correctly, even if there's no data for the given station/year
 > 
 > - [x] Handle Plotting from the user's input, using above data
 >
@@ -79,4 +78,8 @@
 > [^3]: The number of riders seems to be multiple times what it should be.  For **Commands 6 and 7**,
 >       sometimes it can go from being double what it should be, to quadruple.  Working to resolve this
 >       issue, but for now, the core functionality is present.  Once this is fixed, everything should
->       be good to go.
+>       be good to go.  **UPDATE[^4]**
+>
+> [^4]: The issue where the number of riders was multiple times what it should be
+>       **HAS BEEN RESOLVED**.  The issue was using a **```JOIN```** statement, which caused
+>       the program to get duplicates from that table too.
